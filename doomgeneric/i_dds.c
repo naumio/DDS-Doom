@@ -27,18 +27,25 @@
 #include "m_config.h"
 #include "m_misc.h"
 
+#include "doomgeneric.h"
+
 #include "dds/dds.h"
 #include "ROS_GamePad.h"
+#include "ROS_Image.h"
 
 #define READ_BUF_SIZE 1
 #define GAMEPAD_DDS_SUB_TOPIC_NAME "rt/dds_gamepad"
+#define IMAGE_DDS_PUB_TOPIC_NAME "rt/dds_doom_image"
 
 static dds_entity_t participant = -1;
 static dds_entity_t topic_input = -1;
 static dds_entity_t reader_input = -1;
+static dds_entity_t topic_image = -1;
+static dds_entity_t writer_image = -1;
 
 static void *read_buf[READ_BUF_SIZE] = {0};
 static dds_sample_info_t sample_infos[READ_BUF_SIZE] = {0};
+static sensor_msgs_msg_dds__Image_ image;
 
 static int weapon = 0;
 
@@ -54,6 +61,14 @@ void I_InitDDS(void)
 {
     /* Register shudown callback */
     I_AtExit(I_ShutdownDDS, true);
+
+    /* Initialize qos for image topic */
+    dds_qos_t *image_qos = NULL;
+//    dds_qos_t *image_qos = dds_create_qos ();
+//    dds_qset_reliability (image_qos, DDS_RELIABILITY_BEST_EFFORT, DDS_SECS (1));
+//    dds_qset_durability(image_qos, DDS_DURABILITY_VOLATILE);
+//    dds_qset_history(image_qos, DDS_HISTORY_KEEP_LAST, 5);
+//    dds_qset_resource_limits (image_qos, 5, DDS_LENGTH_UNLIMITED, DDS_LENGTH_UNLIMITED);
 
     /* Initialize participant, topic etc. */
     participant = dds_create_participant (DDS_DOMAIN_DEFAULT, NULL, NULL);
@@ -71,10 +86,26 @@ void I_InitDDS(void)
         return;
     }
 
+    topic_image = dds_create_topic (participant, &sensor_msgs_msg_dds__Image__desc, IMAGE_DDS_PUB_TOPIC_NAME, image_qos, NULL);
+    if (topic_image < 0)
+    {
+        printf("I_InitDDSS: Unable to create DDS topic: %s\n", dds_strretcode(-topic_image));
+        dds_destroy();
+        return;
+    }
+
     reader_input = dds_create_reader(participant, topic_input, NULL, NULL);
     if (reader_input < 0)
     {
-        printf("I_InitDDS: Unable to create DDS topic: %s\n", dds_strretcode(-reader_input));
+        printf("I_InitDDS: Unable to create DDS reader: %s\n", dds_strretcode(-reader_input));
+        dds_destroy();
+        return;
+    }
+
+    writer_image = dds_create_writer(participant, topic_image, image_qos, NULL);
+    if (writer_image < 0)
+    {
+        printf("I_InitDDS: Unable to create DDS writer: %s\n", dds_strretcode(-writer_image));
         dds_destroy();
         return;
     }
@@ -87,24 +118,44 @@ void I_InitDDS(void)
         memset(read_buf[i], 0, sizeof(sensor_msgs_msg_GamePad));
     }
 
+    // Initialize image
+    image.header.frame_id = "doom_image";
+    image.height = DOOMGENERIC_RESY;
+    image.width = DOOMGENERIC_RESX;
+    image.data._release = false;
+    image.data._buffer = (uint8_t*)DG_ScreenBuffer;
+    image.data._maximum = DOOMGENERIC_RESY * DOOMGENERIC_RESX * 4;
+    image.data._length = DOOMGENERIC_RESY * DOOMGENERIC_RESX * 4;
+    image.is_bigendian = false;
+    image.step = DOOMGENERIC_RESX * sizeof(uint32_t);
+    image.encoding = "bgra8";
 
     printf("I_InitDDS: DDS initialized\n");
 }
 
 
-void I_UpdateDDS(void)
+void V_PublishDDSImage(void)
+{
+    // Publish image
+    if (dds_write(writer_image, &image) < 0)
+        printf("Error publishing image : %s\n", dds_strretcode(-writer_image));
+}
+
+void I_UpdateDDSInput(void)
 {
     event_t ev;
-    dds_return_t rc = -1;
+    dds_return_t input_read_status = -1;
     sensor_msgs_msg_GamePad *input;
 
     // Get input from DDS
-    while ((rc = dds_take(reader_input, read_buf, sample_infos, 1, 1)) > 0)
+    while ((input_read_status = dds_take(reader_input, read_buf, sample_infos, 1, 1)) > 0)
         ;    
 
-    if (rc < 0)
-        return;
+    memset(&ev, 0 , sizeof(event_t));
+    ev.type = ev_joystick;
 
+    if (input_read_status >= 0)
+    {
     input = read_buf[0];
 
     // Event-related data that depends on the type of event:
@@ -161,8 +212,6 @@ void I_UpdateDDS(void)
     //   
     // } buttoncode_t;
 
-    memset(&ev, 0 , sizeof(event_t));
-    ev.type = ev_joystick;
 
     ev.data1 |= (int)(input->RT > 10.0) << 0;   // Right trigger = attack
     ev.data1 |= (int)(input->y) << 1;           // Y button = use
@@ -181,6 +230,8 @@ void I_UpdateDDS(void)
         ev.data4 = (int)input->LS_X - 10;
     else if ((int)input->LS_X < -10)
         ev.data4 = (int)input->LS_X + 10;
+
+    }
 
     D_PostEvent(&ev);
 }

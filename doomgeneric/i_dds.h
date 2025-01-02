@@ -21,7 +21,8 @@
 
 void I_InitDDS(void);
 void I_ShutdownDDS(void);
-void I_UpdateDDS(void);
+void I_UpdateDDSInput(void);
+void V_PublishDDSImage(void);
 
 #endif /* #ifndef __I_DDS__ */
 
