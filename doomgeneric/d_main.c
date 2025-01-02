@@ -57,6 +57,7 @@
 #include "i_system.h"
 #include "i_timer.h"
 #include "i_video.h"
+#include "i_dds.h"
 
 #include "g_game.h"
 
@@ -1613,6 +1614,7 @@ void D_DoomMain (void)
     I_InitJoystick();
     I_InitSound(true);
     I_InitMusic();
+    I_InitDDS();
 
 #ifdef FEATURE_MULTIPLAYER
     printf ("NET_Init: Init network subsystem.\n");

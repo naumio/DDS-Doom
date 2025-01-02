@@ -32,6 +32,7 @@ rcsid[] = "$Id: i_x.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 #include "d_main.h"
 #include "i_video.h"
 #include "z_zone.h"
+#include "i_dds.h"
 
 #include "tables.h"
 #include "doomkeys.h"
@@ -253,6 +254,7 @@ void I_StartFrame (void)
 void I_StartTic (void)
 {
 	I_GetEvent();
+    I_UpdateDDS();
 }
 
 void I_UpdateNoBlit (void)

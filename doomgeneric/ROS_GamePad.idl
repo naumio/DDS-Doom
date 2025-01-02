@@ -1,0 +1,56 @@
+
+#include "ROS_Header.idl"
+
+module sensor_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      "Reports the state of a gamepad's axes and buttons.")
+    struct GamePad {
+      @verbatim (language="comment", text=
+        "The timestamp is the time at which data is received from the gamepad.")
+      std_msgs::msg::dds_::Header_ header;
+
+      @verbatim (language="comment", text="Left thumbstick position, X axis")
+      float LS_X;
+      @verbatim (language="comment", text="Left thumbstick position, Y axis")
+      float LS_Y;
+      @verbatim (language="comment", text="Right thumbstick position, X axis")
+      float RS_X;
+      @verbatim (language="comment", text="Right thumbstick position, Y axis")
+      float RS_Y;
+      @verbatim (language="comment", text="Left trigger position")
+      float LT;
+      @verbatim (language="comment", text="Right trigger position")
+      float RT;
+
+      @verbatim (language="comment", text="Start button")
+      boolean start;
+      @verbatim (language="comment", text="Select button")
+      boolean select;
+      @verbatim (language="comment", text="X button")
+      boolean x;
+      @verbatim (language="comment", text="Y button")
+      boolean y;
+      @verbatim (language="comment", text="A button")
+      boolean a;
+      @verbatim (language="comment", text="B button")
+      boolean b;
+      @verbatim (language="comment", text="DPad Up button")
+      boolean dpad_up;
+      @verbatim (language="comment", text="DPad Down button")
+      boolean dpad_down;
+      @verbatim (language="comment", text="DPad Left button")
+      boolean dpad_left;
+      @verbatim (language="comment", text="DPad Right button")
+      boolean dpad_right;
+      @verbatim (language="comment", text="Left Bumper button")
+      boolean LB;
+      @verbatim (language="comment", text="Right Bumper button")
+      boolean RB;
+      @verbatim (language="comment", text="Left stick button")
+      boolean LS;
+      @verbatim (language="comment", text="Right stick button")
+      boolean RS;
+    };
+  };
+};
