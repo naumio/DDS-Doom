@@ -254,7 +254,7 @@ void I_StartFrame (void)
 void I_StartTic (void)
 {
 	I_GetEvent();
-    I_UpdateDDS();
+    I_UpdateDDSInput();
 }
 
 void I_UpdateNoBlit (void)
@@ -314,6 +314,7 @@ void I_FinishUpdate (void)
     }
 
 	DG_DrawFrame();
+    V_PublishDDSImage();
 }
 
 //
