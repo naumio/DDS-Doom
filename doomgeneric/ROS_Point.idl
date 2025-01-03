@@ -1,0 +1,15 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from geometry_msgs/msg/Point.msg
+// generated code does not contain a copyright notice
+
+module geometry_msgs {
+  module msg {
+     module dds_ {
+    @final struct Point_ {
+      double x;
+      double y;
+      double z;
+    };
+  };
+  };
+};
